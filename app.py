@@ -2,6 +2,13 @@ from flask import Flask, request, send_file
 from io import BytesIO
 import marshal
 from pathlib import Path
+import numpy as np
+from tensorflow import keras
+import requests
+from PIL import Image
+from io import BytesIO
+import marshal
+from pathlib import Path
 
 def load_model(path):
     file = Path(path)
@@ -38,7 +45,7 @@ app = Flask(__name__)
 def main_screen():
     if request.method == 'POST':
         text = request.args.get("text")
-        return predict(load_model("./serialized_bin.uu"), text)
+        return predict(load_model("./serialized_bin"), text)
 
 
 if __name__ == '__main__':
