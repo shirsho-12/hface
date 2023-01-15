@@ -1,4 +1,5 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, url_for, redirect, send_from_directory
+from werkzeug.utils import secure_filename
 from io import BytesIO
 import marshal
 from pathlib import Path
@@ -6,9 +7,9 @@ import numpy as np
 from tensorflow import keras
 import requests
 from PIL import Image
-from io import BytesIO
-import marshal
-from pathlib import Path
+import random
+import json
+import urllib
 
 def load_model(path):
     file = Path(path)
@@ -32,21 +33,26 @@ def predict(model, text):
     """Returns a PIL image of the text, can be converted to BytesIO if needed"""
     """Long texts will take a long time to process"""
     img = model(text)
-    return send_file(
-        BytesIO(img_to_array(img)),
-        mimetype='image/jpeg',
-        as_attachment=True,
-        download_name='test.jpg')
+    filename = f"{random.randint(1, 100000000000)}.jpg"
+    img.save(f"./imgs/{filename}")
+    return {"data": [{"url": f"{request.url.replace('/main', '/imgs')}/{filename}"}]}
 
 
 app = Flask(__name__)
 
+
 @app.route('/main', methods=['POST'])
 def main_screen():
+    print(json.loads(request.get_data()))
     if request.method == 'POST':
-        text = request.args.get("text")
+        text = json.loads(request.get_data())["text"]
         return predict(load_model("./serialized_bin"), text)
 
 
+@app.route('/imgs/<filename>', methods=['GET'])
+def get_img(filename):
+    return send_from_directory("imgs", filename)
+
+
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=2500)
